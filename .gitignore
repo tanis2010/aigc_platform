@@ -107,6 +107,7 @@ ENV/
 env.bak/
 venv.bak/
 data/
+/backend/outputs/
 
 # Spyder project settings
 .spyderproject
