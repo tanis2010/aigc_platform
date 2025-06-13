@@ -4,18 +4,19 @@ import { Service } from './services';
 export type TaskStatus = 'pending' | 'processing' | 'completed' | 'failed';
 
 export interface Task {
-  id: number;
+  id: string;
   user_id: number;
   service_id: number;
+  service_name: string;
   status: TaskStatus;
-  input_data: string;
-  output_data?: string;
+  input_data: any;
+  result_data?: any;
   error_message?: string;
   credits_used: number;
   created_at: string;
   started_at?: string;
   completed_at?: string;
-  service: Service;
+  service?: Service;
 }
 
 export interface ImageAgeTransformResponse {
@@ -23,21 +24,21 @@ export interface ImageAgeTransformResponse {
   message: string;
 }
 
-export const tasksService = {
+export const taskService = {
   // 获取用户任务列表
   getTasks: async (params?: {
     status?: TaskStatus;
     limit?: number;
     offset?: number;
-  }): Promise<Task[]> => {
+  }) => {
     const response = await api.get('/tasks/', { params });
-    return response.data;
+    return response;
   },
 
   // 获取单个任务详情
-  getTask: async (id: number): Promise<Task> => {
+  getTask: async (id: string) => {
     const response = await api.get(`/tasks/${id}`);
-    return response.data;
+    return response;
   },
 
   // 创建图片年龄变换任务
@@ -58,8 +59,9 @@ export const tasksService = {
   },
 
   // 删除任务
-  deleteTask: async (id: number): Promise<{ message: string }> => {
-    const response = await api.delete(`/tasks/${id}`);
-    return response.data;
+  deleteTask: async (id: string): Promise<void> => {
+    await api.delete(`/tasks/${id}`);
   },
 };
+
+export const tasksService = taskService;

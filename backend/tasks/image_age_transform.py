@@ -8,9 +8,11 @@ import json
 import os
 import base64
 from datetime import datetime
-from volcengine.visual import VisualService
+from volcengine.visual.VisualService import VisualService
 from volcengine.const import Const
 import logging
+import io
+from PIL import Image
 
 # 配置日志
 logging.basicConfig(level=logging.INFO)
@@ -25,16 +27,49 @@ def get_volc_client():
         raise ValueError("火山引擎API密钥未配置")
     
     visual_service = VisualService()
+    print("access_key:" + settings.volc_access_key)
+    print("access_key:" + settings.volc_secret_key)
     visual_service.set_ak(settings.volc_access_key)
-    visual_service.set_sk(settings.volc_secret_key)
-    visual_service.set_region(settings.volc_region)
+    visual_service.set_sk(settings.volc_secret_key)    
     
     return visual_service
 
-def encode_image_to_base64(image_path: str) -> str:
-    """将图片编码为base64"""
-    with open(image_path, "rb") as image_file:
-        return base64.b64encode(image_file.read()).decode('utf-8')
+def process_images_to_base64(files):
+    """
+    将图片文件处理并转换为base64字符串列表
+    :param files: 图片文件路径列表
+    :return: base64编码的字符串列表
+    """ 
+    binary_data_base64 = []
+    for file in files:
+        # 读取本地图片文件并转换为base64字符串
+        with open(file, 'rb') as image_file:
+            binary_data = image_file.read()
+            # 读取图片并转换为PIL对象
+            img = Image.open(image_file)
+            # 获取原始尺寸
+            width, height = img.size
+            # 计算缩放比例
+            scale = min(1024/width, 1024/height, 1.0)
+            # 计算新的尺寸
+            new_width = int(width * scale)
+            new_height = int(height * scale)
+            # 如果需要缩放，则调整图片大小
+            if scale < 1.0:
+                img = img.resize((new_width, new_height), Image.Resampling.LANCZOS)
+                # 将调整后的图片转换为字节流
+                img_byte_arr = io.BytesIO()
+                img.save(img_byte_arr, format=img.format or 'PNG')
+                binary_data = img_byte_arr.getvalue()
+            
+
+            # 转换为base64编码
+            base64_data = base64.b64encode(binary_data)
+            # 转换为字符串
+            base64_str = base64_data.decode('utf-8')
+            binary_data_base64.append(base64_str)
+
+    return binary_data_base64
 
 @celery.task(bind=True)
 def process_image_age_transform(self, task_id: int):
@@ -64,28 +99,55 @@ def process_image_age_transform(self, task_id: int):
         if not os.path.exists(image_path):
             raise FileNotFoundError(f"图片文件不存在: {image_path}")
         
-        # 编码图片
-        image_base64 = encode_image_to_base64(image_path)
-        
         # 调用火山引擎API
         try:
             visual_service = get_volc_client()
             
-            # 构建请求参数
-            req = {
-                "req_key": f"task_{task_id}_{datetime.now().strftime('%Y%m%d%H%M%S')}",
-                "image_base64": image_base64,
-                "target_age": target_age,
-                "return_url": True  # 返回结果图片URL
-            }
+            # 使用新的调用方式
+            files = [image_path]
+            binary_data_base64 = process_images_to_base64(files)
             
-            # 调用年龄变换API（这里使用示例API名称，实际需要根据火山引擎文档调整）
-            resp = visual_service.face_age_transform(req)
+            form = {
+                "req_key": "all_age_generation",
+                "target_age": target_age ,
+                "binary_data_base64":binary_data_base64
+                }
+
+            resp = visual_service.cv_process(form)
             
             if resp.get("code") == 10000:  # 成功
+                # 从响应中获取图片base64数据
+                binary_data_base64_result = resp["data"]["binary_data_base64"][0]
+                
+                # 检查响应是否包含base64数据
+                if "base64," in binary_data_base64_result:
+                    # 提取base64数据
+                    base64_data = binary_data_base64_result.split("base64,")[1]
+                    # 解码base64数据
+                    image_data = base64.b64decode(base64_data)
+                else:
+                    # 直接使用响应内容
+                    image_data = binary_data_base64_result
+                
+                # 将字符串解码为二进制数据
+                binary_data = base64.b64decode(image_data)
+                # 将二进制数据转换为图片
+                image = Image.open(io.BytesIO(binary_data))
+                
+                # 保存图片到输出目录
+                output_filename = f"result_{task_id}_{datetime.now().strftime('%Y%m%d%H%M%S')}.png"
+                output_path = os.path.join("outputs", output_filename)
+                
+                # 确保输出目录存在
+                os.makedirs("outputs", exist_ok=True)
+                
+                # 保存图片
+                image.save(output_path)
+                logger.info(f"图片已保存至: {output_path}")
+                
                 result_data = {
-                    "result_image_url": resp.get("data", {}).get("image_url"),
-                    "result_image_base64": resp.get("data", {}).get("image_base64"),
+                    "result_image_path": output_path,
+                    "result_image_base64": binary_data_base64_result,
                     "original_image_path": image_path,
                     "target_age": target_age,
                     "processed_at": datetime.utcnow().isoformat()

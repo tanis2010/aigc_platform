@@ -23,12 +23,12 @@ const Home: React.FC = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [services, tasks] = await Promise.all([
+        const [services, tasksResponse] = await Promise.all([
           servicesService.getPopularServices(3),
           tasksService.getTasks({ limit: 3 }),
         ]);
         setPopularServices(services);
-        setRecentTasks(tasks);
+        setRecentTasks(tasksResponse.data);
       } catch (error) {
         console.error('获取数据失败:', error);
       } finally {

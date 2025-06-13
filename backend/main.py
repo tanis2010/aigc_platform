@@ -8,6 +8,7 @@ from database import get_db, engine
 from models import Base
 from routers import auth, users, services, tasks, payments
 from config import settings
+from fastapi.staticfiles import StaticFiles
 
 # 创建数据库表
 Base.metadata.create_all(bind=engine)
@@ -41,6 +42,9 @@ async def root():
 @app.get("/health")
 async def health_check():
     return {"status": "healthy"}
+
+# 添加静态文件服务
+app.mount("/outputs", StaticFiles(directory="outputs"), name="outputs")
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)

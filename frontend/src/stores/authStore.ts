@@ -10,9 +10,10 @@ interface AuthState {
   logout: () => void;
   updateUser: (user: User) => void;
   updateCredits: (credits: number) => void;
+  updateUserCredits: (credits: number) => void;
 }
 
-export const useAuthStore = create<AuthState>()()
+export const useAuthStore = create<AuthState>()(
   persist(
     (set, get) => ({
       user: null,
@@ -52,10 +53,22 @@ export const useAuthStore = create<AuthState>()()
           });
         }
       },
+
+      updateUserCredits: (credits: number) => {
+        const currentUser = get().user;
+        if (currentUser) {
+          set({
+            user: {
+              ...currentUser,
+              credits,
+            },
+          });
+        }
+      },
     }),
     {
       name: 'auth-storage',
-      partialize: (state) => ({
+      partialize: (state: AuthState) => ({
         user: state.user,
         token: state.token,
         isAuthenticated: state.isAuthenticated,

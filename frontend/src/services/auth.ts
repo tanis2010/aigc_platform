@@ -15,6 +15,9 @@ export interface User {
   id: number;
   username: string;
   email: string;
+  full_name?: string;
+  phone?: string;
+  avatar_url?: string;
   role: string;
   credits: number;
   is_active: boolean;

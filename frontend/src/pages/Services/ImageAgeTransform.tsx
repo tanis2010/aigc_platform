@@ -34,7 +34,7 @@ const ImageAgeTransform: React.FC = () => {
 
   const serviceCost = 10; // 服务消耗积分
 
-  const handleFileChange = useCallback<UploadProps['onChange']>((info) => {
+  const handleFileChange = useCallback((info: any) => {
     const { file } = info;
     if (file.status === 'removed') {
       setSelectedFile(null);
