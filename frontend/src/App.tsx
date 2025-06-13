@@ -13,6 +13,7 @@ import Credits from './pages/Credits';
 import ImageAgeTransform from './pages/Services/ImageAgeTransform';
 import { useAuthStore } from './stores/authStore';
 import './App.css';
+import HairStyle from './pages/Services/HairStyle';
 
 const { Content } = Layout;
 
@@ -41,6 +42,7 @@ function App() {
                 <Route path="/" element={<Home />} />
                 <Route path="/services" element={<Services />} />
                 <Route path="/services/image-age-transform" element={<ImageAgeTransform />} />
+                <Route path="/services/hair_style" element={<HairStyle />} />
                 <Route path="/tasks" element={<Tasks />} />
                 <Route path="/profile" element={<Profile />} />
                 <Route path="/credits" element={<Credits />} />

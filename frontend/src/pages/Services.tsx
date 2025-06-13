@@ -65,6 +65,8 @@ const Services: React.FC = () => {
   const handleServiceClick = (service: Service) => {
     if (service.name === '图片年龄变换') {
       navigate('/services/image-age-transform');
+    } else if (service.name === '发型编辑') {
+      navigate('/services/hair_style');
     }
   };
 
