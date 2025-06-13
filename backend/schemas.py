@@ -106,6 +106,15 @@ class ImageAgeTransformResponse(BaseModel):
     task_id: int
     message: str
 
+# 发型编辑服务专用模式
+class HairStyleRequest(BaseModel):
+    hair_style: str  # 发型类型
+    add_watermark: bool  # 是否添加水印
+
+class HairStyleResponse(BaseModel):
+    task_id: int
+    message: str
+
 # 支付模式
 class PaymentBase(BaseModel):
     amount: float

@@ -24,6 +24,11 @@ export interface ImageAgeTransformResponse {
   message: string;
 }
 
+export interface HairStyleResponse {
+  task_id: number;
+  message: string;
+}
+
 export const taskService = {
   // 获取用户任务列表
   getTasks: async (params?: {
@@ -51,6 +56,25 @@ export const taskService = {
     formData.append('target_age', targetAge.toString());
 
     const response = await api.post('/tasks/image-age-transform', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return response.data;
+  },
+
+  // 创建发型编辑任务
+  createHairStyleTask: async (
+    image: File,
+    hairStyle: string,
+    addWatermark: boolean
+  ): Promise<HairStyleResponse> => {
+    const formData = new FormData();
+    formData.append('image', image);
+    formData.append('hair_style', hairStyle);
+    formData.append('add_watermark', addWatermark.toString());
+
+    const response = await api.post('/tasks/hair-style', formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },

@@ -43,6 +43,13 @@ def init_database():
                 "cost_credits": settings.image_age_transform_cost,
                 "endpoint": "/api/tasks/image-age-transform"
             },
+            {
+                "name": "发型编辑",
+                "description": "支持对人像的发型进行加刘海、变长发、增发量等操作。目前发型编辑主要支持单人照，发质&发量中部分能力为轻度调节，效果不显著。",
+                "tag_id": image_tag.id,
+                "cost_credits": settings.hari_style_cost,
+                "endpoint": "/api/tasks/hair_style"
+            },
         ]
         
         for service_data in services_data:
